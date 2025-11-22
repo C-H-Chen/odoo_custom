@@ -10,7 +10,7 @@ class DeliveryReportMail(models.Model):
 
     def action_print_and_send_mail(self):
         line_token = self.env['ir.config_parameter'].sudo().get_param('line_test.token').strip()
-        line_group = "C69da53c13d1847d61be743227181905b"
+        line_group = "your_line_group_id"
 
         for picking in self:
             # 發 Email
@@ -18,7 +18,7 @@ class DeliveryReportMail(models.Model):
                 mail_values = {
                     'subject': f"[通知] test",
                     'body_html': f"test",
-                    'email_to': "mo111193503@gapp.nthu.edu.tw",
+                    'email_to': "your_mail@gmail.com",
                     'email_from': self.env.user.email_formatted,
                 }
                 self.env['mail.mail'].sudo().create(mail_values).send()
@@ -46,4 +46,5 @@ class DeliveryReportMail(models.Model):
         # 回傳 PDF
         return self.env.ref(
             "delivery_report_cus.action_report_custom_delivery_order"
+
         ).report_action(self)
