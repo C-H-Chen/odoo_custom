@@ -1,0 +1,22 @@
+<!-- <?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Workorder Footer Extend -->
+        <template t-name="mrporder_add.MrpDisplayWorkorderFooterExtend" inherit_id="mrp_workorder.MrpDisplayWorkorderFooter">
+            <xpath expr="//button[@barcode_trigger='cloMO']" position="after">
+                <button class="btn btn-info flex-grow-1 ms-2" t-on-click="onClickCustomButton">
+                    My Button
+                </button>
+            </xpath>
+        </template>
+
+        <!-- Production Footer Extend -->
+        <template t-name="mrporder_add.MrpDisplayProductionFooterExtend" inherit_id="mrp_workorder.MrpDisplayProductionFooter">
+            <xpath expr="//button[@t-att-barcode_trigger='props.barcodeTarget ? &quot;cloMO&quot; : false']" position="after">
+                <button class="btn btn-info flex-grow-1 ms-2" t-on-click="onClickCustomButton">
+                    My Button
+                </button>
+            </xpath>
+        </template>
+    </data>
+</odoo> -->

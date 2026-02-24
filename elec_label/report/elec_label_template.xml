@@ -1,0 +1,185 @@
+<!-- <?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="elec_label_template">
+        <t t-call="web.basic_layout">
+
+            <style>
+                /* 外層大表格：負責整體排版 */
+                .cards-grid {
+                    width: 100%;
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                }
+
+                /* 外層格子：關鍵在 height: 1px 讓左右卡片高度同步 */
+                .cards-grid td {
+                    width: 25%; /* 4欄 */
+                    padding: 0;
+                    vertical-align: top;
+                    border: 1px solid #000;
+                    height: 1px; 
+                }
+
+                /* 消除外層重複線條 */
+                .cards-grid tr:not(:first-child) td { border-top: 0; }
+                .cards-grid td:not(:first-child) { border-left: 0; }
+
+                /* 內層表格：負責卡片內容 */
+                .material-table {
+                    width: 100%;
+                    height: 100%; /* 撐滿外層 td */
+                    border-collapse: collapse; 
+                    table-layout: fixed;
+                    font-size: 15px;
+                }
+
+                /* 內層格子設定 */
+                .material-table td {
+                    padding: 0 4px; /* 稍微留白，避免文字貼框 */
+                    border: 1px solid #000;
+                    /* 移除內部所有直框線 (第2點要求) */
+                    border-left: 0;
+                    border-right: 0;
+                    
+                    min-height: 28px;
+                    line-height: 28px;
+                    vertical-align: middle;
+                    white-space: nowrap;
+                    overflow: hidden;
+                }
+
+                /* 處理內層橫線：避免與外框線重複 */
+                .material-table tr:first-child td { border-top: 0; }
+                .material-table tr:last-child td { border-bottom: 0; }
+
+                /* Header 公司名特別處理 */
+                .company-name {
+                    text-align: center;
+                    font-size: 15px; 
+                    font-weight: normal;
+                    height: 28px;
+                    line-height: 28px;
+                }
+
+                .field-name {
+                    text-align: left; 
+                    padding-left: 5px;
+                }
+
+                .value-cell {
+                    text-align: left;
+                    padding-left: 0; /* 讓值靠近欄位名稱 */
+                }
+
+                /* ===== 同步換行列 (採用範例程式碼邏輯) ===== */
+                .sync-row td {
+                    height: auto !important;
+                    min-height: 28px;
+                    line-height: 28px;
+                    vertical-align: top; /* 換行時靠上對齊較美觀 */
+                }
+
+                .sync-row .wrap-value {
+                    white-space: normal !important;
+                    line-height: 1.05;
+                    margin: 0;
+                    padding: 6px 0 0 0;
+                    word-break: break-word;
+                    min-height: 28px;
+                    display: block;
+                }
+
+                /* 修正：如果該行有 wrap-value，調整 padding 避免跑版 */
+                .sync-row td:has(.wrap-value:nth-child(n)) .wrap-value {
+                    padding-top: 0;
+                }
+            </style>
+
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="lines" t-value="doc.order_line"/>
+
+                <t t-set="total_count" t-value="len(lines)"/>
+                <t t-set="total_pages" t-value="int((total_count - 1) / 28) + 1 if total_count > 0 else 1"/>
+
+                <t t-foreach="range(total_pages)" t-as="page_idx">
+                    <div class="page">
+                        <table class="cards-grid">
+                            <tbody>
+                                <t t-foreach="range(7)" t-as="r">
+                                    <tr>
+                                        <t t-foreach="range(4)" t-as="c">
+                                            
+                                            <t t-set="idx" t-value="(page_idx * 28) + (r * 4) + c"/>
+                                            <t t-set="line" t-value="lines[idx] if idx &lt; len(lines) else False"/>
+
+                                            <td>
+                                                <table class="material-table">
+                                                    
+                                                    <colgroup>
+                                                        <col style="width: 18.5%;"/> 
+                                                        <col style="width: 14%;"/>
+                                                        <col style="width: 67.5%;"/>
+                                                    </colgroup>
+
+                                                    <tr>
+                                                        <td colspan="3" class="company-name">琦霖光輝科技有限公司</td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td class="field-name">日期 :</td>
+                                                        <td colspan="2" class="value-cell">
+                                                            <t t-if="line and doc.date_approve">
+                                                                <span t-esc="doc.date_approve.year"/> 年
+                                                                <span t-esc="doc.date_approve.month"/> 月
+                                                                <span t-esc="doc.date_approve.day"/> 日
+                                                            </t>
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr class="sync-row">
+                                                        <td class="field-name">品名 :</td>
+                                                        <td colspan="2" class="value-cell">
+                                                            <div class="wrap-value">
+                                                                <t t-if="line">
+                                                                    <t t-esc="line.product_id.categ_id.name or ''"/>
+                                                                </t>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td class="field-name">數量 :</td>
+                                                        <td colspan="2" class="value-cell">
+                                                            <t t-if="line">
+                                                                <t t-esc="line.product_qty or ''"/>
+                                                            </t>
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr class="sync-row">
+                                                        <td colspan="2" class="field-name">電鍍規格 :</td>
+                                                        <td class="value-cell">
+                                                            <div class="wrap-value">
+                                                                <t t-if="line">
+                                                                    <t t-esc="line.product_id.display_name or ''"/>
+                                                                </t>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+
+                                                </table>
+                                            </td>
+                                        </t>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        
+                        <p style="page-break-after:always;" t-if="page_idx &lt; (total_pages - 1)"/>
+                    </div>
+                </t>
+            </t>
+
+        </t>
+    </template>
+</odoo> -->
