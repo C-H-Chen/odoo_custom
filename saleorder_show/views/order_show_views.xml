@@ -1,0 +1,22 @@
+<odoo>
+    <record id="view_sale_order_tree_inherit_expand_button" model="ir.ui.view">
+        <field name="name">sale.order.tree.inherit.expand.button</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+            
+                <button name="action_toggle_detail"
+                        type="object"
+                        string="+"
+                        class="btn-lg btn-info o_list_button"/>
+
+                <field name="line_table"
+                    widget="html"
+                    string=""
+                    options="{'no_tooltip': True, 'no_label': True}"/>
+
+            </xpath>
+        </field>
+    </record>
+</odoo>

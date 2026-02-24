@@ -1,0 +1,20 @@
+<odoo>
+    <record id="view_stock_pick_form_inherit_select_to_ship" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.show.remaining</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <!-- 把 show_remaining_qty 帶入 view（invisible）供 tree 使用 -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="show_remaining_qty" invisible="1"/>
+            </xpath>
+
+            <!-- 若需要在 move tree 顯示未出貨數量（當 show_remaining_qty=True） -->
+            <xpath expr="//field[@name='move_ids_without_package']/tree/field[@name='product_uom_qty']" position="replace">
+                <field name="product_uom_qty" string="需求數量" column_invisible="parent.show_remaining_qty"/>
+                <field name="remaining_qty_to_ship" string="未出貨數量" column_invisible="not parent.show_remaining_qty"/>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

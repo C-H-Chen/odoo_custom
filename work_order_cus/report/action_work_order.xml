@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- A4 紙張格式 -->
+    <record id="paperformat_work_order_card_a4" model="report.paperformat">
+        <field name="name">Work Order A4</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">4</field>
+        <field name="margin_bottom">4</field>
+        <field name="margin_left">4</field>
+        <field name="margin_right">4</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_work_order_card" model="ir.actions.report">
+        <field name="name">工作派令單</field>
+        <field name="model">mrp.production</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">work_order_cus.work_order_template</field>
+        <field name="report_file">work_order_cus.work_order_template</field>
+        <field name="print_report_name">'工作派令單'</field>
+        <field name="paperformat_id" ref="paperformat_work_order_card_a4"/>
+        <field name="binding_model_id" ref="mrp.model_mrp_production"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

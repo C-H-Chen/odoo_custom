@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="work_order_template">
+        <t t-call="web.basic_layout">
+
+            <style>
+                table.cards {
+                    width: 100%;
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                    font-size: 14px;
+                }
+
+                table.cards td {
+                    padding: 0;
+                    border: 1px solid #000;
+                    height: 1px;          /* 左右 card 同步高度 */
+                    vertical-align: top;
+                }
+
+                table.cards tr:not(:first-child) td {
+                    border-top: 0;
+                }
+                table.cards td:not(:first-child) {
+                    border-left: 0;
+                }
+
+                table.card-inner {
+                    width: 100%;
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                    height: 100%;         /* 撐滿外層 td */
+                }
+
+                table.card-inner td {
+                    padding: 0 6px;
+                    border: 1px solid #000;
+                    height: 24px;
+                    line-height: 24px;
+                    vertical-align: middle;
+                    white-space: nowrap;
+                    overflow: hidden;
+                }
+
+                table.card-inner tr:first-child td { border-top: 0; }
+                table.card-inner tr:last-child td { border-bottom: 0; }
+                table.card-inner td:first-child { border-left: 0; }
+                table.card-inner td:last-child { border-right: 0; }
+
+                table.card-inner tr.header td {
+                    height: 30px;
+                    line-height: 30px;
+                }
+
+                .company-name { font-size: 20px; font-weight: bold; }
+                .qr-code { font-size: 10px; }
+                .work-title { font-size: 20px; font-weight: bold; }
+
+                .center { text-align: center; }
+                .left { text-align: left; }
+                .field-label { text-align: left; padding-left: 2px; }
+
+                /* ===== 同步換行列（只用在三列） ===== */
+                .sync-row td {
+                    height: auto !important;
+                    min-height: 24px;
+                    line-height: 24px;
+                    vertical-align: top;
+                }
+
+                .sync-row .wrap-value {
+                    white-space: normal !important;
+                    line-height: 1.05;
+                    margin: 0;
+                    padding: 6px 0 0 0;
+                    word-break: break-word;
+                    min-height: 24px;
+                    display: block;
+                }
+
+                .sync-row td:has(.wrap-value:nth-child(n)) .wrap-value {
+                    padding-top: 0;
+                }
+            </style>
+
+            <t t-foreach="docs" t-as="o">
+                <t t-set="move_lines" t-value="o.move_raw_ids.sorted(lambda m: (m.sequence, m.id))"/>
+                <t t-set="total_count" t-value="len(move_lines)"/>
+                <t t-set="total_pages" t-value="int((total_count - 1) / 12) + 1 if total_count > 0 else 1"/>
+
+                <t t-foreach="range(total_pages)" t-as="page_idx">
+                    <div class="page">
+                        <table class="cards">
+                            <t t-foreach="range(6)" t-as="row">
+                                <tr>
+                                    <t t-foreach="range(2)" t-as="col">
+                                        <t t-set="card_idx" t-value="(page_idx * 12) + (row * 2) + col"/>
+                                        <t t-set="move" t-value="move_lines[card_idx] if card_idx &lt; total_count else False"/>
+
+                                        <td>
+                                            <table class="card-inner">
+
+                                                <colgroup>
+                                                    <col style="width:15%"/>
+                                                    <col style="width:35%"/>
+                                                    <col style="width:22.5%"/>
+                                                    <col style="width:27.5%"/>
+                                                </colgroup>
+
+                                                <tr class="header">
+                                                    <td colspan="4" class="left">
+                                                        <span class="company-name">　　&#160;&#160;&#160;琦霖光輝科技有限公司</span>
+                                                        <span class="qr-code">　　　　　　　&#160;&#160; QR-07-XXX-01</span>
+                                                    </td>
+                                                </tr>
+
+                                                <tr class="header">
+                                                    <td colspan="2" class="center work-title">工作派令單</td>
+                                                    <td colspan="2" class="field-label">
+                                                        　　日期：
+                                                            <t t-if="move and move.create_date">
+                                                                <span t-esc="move.create_date.strftime('%Y&#160;&#160;年&#160;&#160;%m&#160;&#160;月&#160;&#160;%d&#160;&#160;日')"/>
+                                                            </t>
+                                                            <t t-else="">
+                                                                　&#160;&#160;年　　月　　日
+                                                            </t>
+                                                    </td>
+                                                </tr>
+
+                                                <!-- 品名 -->
+                                                <tr class="sync-row">
+                                                    <td class="field-label">品名</td>
+                                                    <td class="field-label">
+                                                        <div class="wrap-value">
+                                                            <t t-esc="o.product_id.display_name if move else ''"/>
+                                                        </div>
+                                                    </td>
+                                                    <td class="field-label">交期</td>
+                                                    <td class="field-label">
+                                                        <t t-esc="o.origin if move else ''"/>
+                                                    </td>
+                                                </tr>
+
+                                                <!-- 材質 -->
+                                                <tr class="sync-row">
+                                                    <td class="field-label">材質</td>
+                                                    <td class="field-label">
+                                                        <div class="wrap-value">
+                                                            <t t-esc="o.product_id.categ_id.name if move else ''"/>
+                                                        </div>
+                                                    </td>
+                                                    <td class="field-label">生產數量</td>
+                                                    <td class="field-label">
+                                                        <t t-esc="o.product_qty if move else ''"/>
+                                                    </td>
+                                                </tr>
+
+                                                <!-- 材料規格 -->
+                                                <tr class="sync-row">
+                                                    <td class="field-label">材料規格</td>
+                                                    <td class="field-label">
+                                                        <div class="wrap-value">
+                                                            <t t-esc="move.product_id.display_name if move else ''"/>
+                                                        </div>
+                                                    </td>
+                                                    <td class="field-label">使用材料數量</td>
+                                                    <td class="field-label">
+                                                        <t t-esc="move.quantity if move else ''"/>
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="field-label">秒數</td>
+                                                    <td class="field-label">
+                                                        <t t-set="seconds"
+                                                            t-value="sum(o.bom_id.operation_ids.mapped('time_cycle')) * 60 if move and o.bom_id else ''"/>
+                                                        <t t-esc="seconds if seconds != '' else ''"/>
+                                                    </td>
+                                                    <td class="field-label">預計完成日期</td>
+                                                    <td class="field-label">
+                                                        <t t-if="move">
+                                                            <span t-field="o.date_start" t-options='{"widget":"date"}'/>
+                                                        </t>
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="field-label">生產天數</td>
+                                                    <td class="field-label">
+                                                        <t t-if="move and o.duration_expected is not False or None or ''">
+                                                            <t t-set="hours" t-value="round(o.duration_expected / 60.0, 2)"/>
+                                                            <span t-esc="hours"/>　(H)
+                                                        </t>
+                                                    </td>
+                                                    <td class="field-label">最晚開工日</td>
+                                                    <td class="field-label">
+                                                        <t t-if="move">
+                                                            <span t-field="o.date_late" t-options='{"widget":"date"}'/>
+                                                        </t>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </t>
+                                </tr>
+                            </t>
+                        </table>
+                        <p style="page-break-after:always;" t-if="page_idx &lt; (total_pages - 1)"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

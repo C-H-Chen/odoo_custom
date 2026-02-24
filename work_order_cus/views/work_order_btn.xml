@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="mrp_production_form_add_work_card_button" model="ir.ui.view">
+        <field name="name">mrp.production.form.work.card.button</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <header>
+                <button name="action_print_work_order_card"
+                        type="object"
+                        string="工作派令單"
+                        class="btn-primary"/>
+            </header>
+
+            <xpath expr="//field[@name='date_start']/.." position="after">
+                <field name="date_late"/>
+            </xpath>
+            
+        </field>
+    </record>
+</odoo>
