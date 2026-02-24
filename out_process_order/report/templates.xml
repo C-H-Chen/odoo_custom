@@ -134,7 +134,7 @@
                 <div class="set-block">
 
                   <div class="right-header">
-                    <span class="big-title">琦霖光輝科技有限公司</span>
+                    <span class="big-title">xxxxxx有限公司</span>
                     <span class="right-title">　　　　　　　　　　　　　　　廠商聯</span>
                   </div>
 
@@ -193,7 +193,7 @@
                   </table>
 
                   <div class="right-header" style="margin-top:5px;">
-                    <span class="big-title">琦霖光輝科技有限公司</span>
+                    <span class="big-title">xxxxxx有限公司</span>
                     <span class="right-title">　　　　　　　　　　　　　　　自存聯</span>
                   </div>
 
@@ -321,7 +321,7 @@
                   </table>
 
                   <div class="right-header" style="margin-top:5px;">
-                    <span class="big-title">琦霖光輝科技有限公司</span>
+                    <span class="big-title">xxxxxx有限公司</span>
                     <span class="right-title">　　　　　　　　　　　　　　　自存聯</span>
                   </div>
 
@@ -494,7 +494,7 @@
                                                 </colgroup>
 
                                                 <tr>
-                                                    <td colspan="3" class="company-name">琦霖光輝科技有限公司</td>
+                                                    <td colspan="3" class="company-name">xxxxxx有限公司</td>
                                                 </tr>
 
                                                 <tr>
@@ -556,4 +556,5 @@
       </t>
     </t>
   </template>
+
 </odoo>
