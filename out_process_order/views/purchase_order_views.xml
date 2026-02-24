@@ -1,0 +1,15 @@
+<odoo>
+  <record id="view_purchase_order_form_inherit_outsource" model="ir.ui.view">
+    <field name="name">purchase.order.form.outsource</field>
+    <field name="model">purchase.order</field>
+    <field name="inherit_id" ref="purchase.purchase_order_form"/>
+    <field name="arch" type="xml">
+      <header>
+        <button name="action_download_outsource_pack"
+                type="object"
+                string="外包加工單"
+                class="btn-primary"/>
+      </header>
+    </field>
+  </record>
+</odoo>

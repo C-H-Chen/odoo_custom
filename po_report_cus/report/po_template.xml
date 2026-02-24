@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_custom_po">
+        <t t-call="web.basic_layout">
+            <t t-foreach="docs" t-as="doc">
+
+                <!-- ================= 共用變數 ================= -->
+                <t t-set="lines" t-value="doc.order_line"/>
+                <t t-set="product_lines"
+                    t-value="doc.order_line.filtered(lambda l: not l.display_type)"/>
+                <t t-set="line_count" t-value="len(product_lines)"/>
+                <t t-set="rows_per_page" t-value="20"/>
+                <t t-set="page_count"
+                   t-value="(line_count + rows_per_page - 1) // rows_per_page or 1"/>
+                <t t-set="total_amount"
+                   t-value="sum(l.price_subtotal for l in lines)"/>
+
+                <!-- ================= 每一頁 ================= -->
+                <t t-foreach="range(page_count)" t-as="page">
+                    <div class="page">
+
+                        <!-- ================= CSS ================= -->
+                        <style>
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                table-layout: fixed;
+                                font-size: 16px;
+                                margin: 0;
+                            }
+                            td, th {
+                                border: 1px solid black;
+                                height: 30px;
+                                line-height: 30px;
+                                padding: 0 6px;
+                                vertical-align: middle;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: clip;
+                            }
+                            .no-top-border td,
+                            .no-top-border th {
+                                border-top: none;
+                            }
+                            .center { text-align: center; }
+                            .left { text-align: left; }
+
+                            .title {
+                                font-size: 30px;
+                                text-align: center;
+                                line-height: 30px;
+                                margin-bottom: 6px;
+                            }
+                            .po-title {
+                                font-size: 24px;
+                                line-height: 30px;
+                            }
+                            .attach-title {
+                                height: calc(30px * 11);
+                                vertical-align: middle;
+                            }
+                            .wrap-value {
+                                white-space: normal !important;
+                                line-height: 1.05;          /* 幾乎貼齊 */
+                                padding: 0 !important;      /* 消掉內距 */
+                                margin: 0 !important;
+                            }
+                        </style>
+
+                        <!-- ================= 公司名稱================= -->
+                        <div style="text-align:center;">
+                            <img t-att-src="'/po_report_cus/static/src/img/chilin_logo.png'"
+                                    style="height:30px; vertical-align:middle; margin-right:2px; margin-bottom:6px;"/>
+                            <span class="title" style="display:inline-block; vertical-align:middle;">
+                                 琦 霖 光 輝 科 技 有 限 公 司
+                            </span>
+                        </div>
+
+                        <!-- 表頭 -->
+                        <table>
+                            <colgroup>
+                                <col style="width:10%"/>
+                                <col style="width:24%"/>
+                                <col style="width:10%"/>
+                                <col style="width:16%"/>
+                                <col style="width:14%"/>
+                                <col style="width:26%"/>
+                            </colgroup>
+                            <tr>
+                                <td colspan="4" class="center po-title">　　　　　　&#160;&#160;採 購 單</td>
+                                <td class="center">採購日期</td>
+                                <td>
+                                    <t t-esc="doc.date_approve.strftime('%Y-%m-%d') if doc.date_approve else ''"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="center">廠商名稱</td>
+                                <td>
+                                    <t t-esc="doc.partner_id.name if doc.partner_id.name else ''"/>
+                                </td>
+                                <td class="center">廠商電話</td>
+                                <td>
+                                    <t t-esc="doc.partner_id.phone if doc.partner_id.phone else ''"/>
+                                </td>
+                                <td class="center">客戶訂單號碼</td>
+                                <td>
+                                    <t t-esc="doc.origin if doc.origin else ''"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="center">請購人員</td>
+                                <td>
+                                    <t t-esc="doc.user_id.name if doc.user_id.name else ''"/>
+                                </td>
+                                <td class="center">交貨日期</td>
+                                <td><t t-esc="doc.date_planned.strftime('%Y-%m-%d') if doc.date_planned else ''"/></td>
+                                <td class="center">訂單號碼</td>
+                                <td>
+                                    <t t-esc="doc.name if doc.name else ''"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- ================= 明細 ================= -->
+                        <table>
+                            <colgroup>
+                                <col style="width:10%"/>
+                                <col style="width:28.5%"/>
+                                <col style="width:28.5%"/>
+                                <col style="width:11%"/>
+                                <col style="width:11%"/>
+                                <col style="width:11%"/>
+                            </colgroup>
+
+                            <!-- 明細表頭 -->
+                            <tr class="center no-top-border">
+                                <td>No</td>
+                                <td>品 名</td>
+                                <td>規 格</td>
+                                <td>數 量</td>
+                                <td>單 價</td>
+                                <td>小 計</td>
+                            </tr>
+
+                            <!-- 固定 20 列 -->
+                            <t t-foreach="range(rows_per_page)" t-as="row">
+                                <t t-set="idx" t-value="page * rows_per_page + row"/>
+                                <tr class="center">
+                                    <t t-if="idx &lt; line_count">
+                                        <td><t t-esc="idx + 1"/></td>
+                                        <td><div class="wrap-value"><t t-esc="product_lines[idx].product_id.categ_id.name"/></div></td>
+                                        <td><div class="wrap-value"><t t-esc="product_lines[idx].product_id.display_name"/></div></td>
+                                        <td><t t-esc="product_lines[idx].product_qty"/></td>
+                                        <td><t t-esc="product_lines[idx].price_unit"/></td>
+                                        <td><t t-esc="product_lines[idx].price_subtotal"/></td>
+
+                                    </t>
+                                    <t t-else="">
+                                        <td><t t-esc="idx + 1"/></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </t>
+                                </tr>
+                            </t>
+                        </table>
+
+                        <!-- 總價 / 附加要求 -->
+                        <table>
+                            <colgroup>
+                                <col style="width:24.25%"/>
+                                <col style="width:75.75%"/>
+                            </colgroup>
+
+                            <!-- 總價 -->
+                            <tr class="left no-top-border">
+                                <td>&#160;&#160;&#160;　總　　　　　價　　：</td>
+                                <td>
+                                    <t t-if="page + 1 == page_count">
+                                        新台幣
+                                        <!-- 萬位 -->
+                                        <t t-esc="('　　　　' + str(int((total_amount // 10000))) + '&#160;&#160;&#160;') if total_amount and total_amount &gt;= 10000 else '　　　　　　'"/>萬
+
+                                        <!-- 仟位 -->
+                                        <t t-esc="('　　　　' + str(int(((total_amount % 10000) // 1000))) + '&#160;&#160;&#160;') if total_amount and total_amount &gt;= 1000 else '　　　　　　'"/>仟
+
+                                        <!-- 佰位 -->
+                                        <t t-esc="('　　　　　' + str(int(((total_amount % 1000) // 100))) + '&#160;&#160;&#160;') if total_amount and total_amount &gt;= 100 else '　　　　　　'"/>佰
+
+                                        <!-- 元位 -->
+                                        <t t-esc="('　　　' + str('%.2f' %(total_amount % 100)) + '&#160;&#160;&#160;') if total_amount is not None else '　　　　　　'"/>元　整
+                                    </t>
+
+                                    <t t-else="">
+                                        新台幣　　　　　　萬　　　　　　仟　　　　　　佰　　　　　　元　整
+                                    </t>
+                                </td>
+                            </tr>
+
+                            <!-- 備註 -->
+                            <tr>
+                                <td colspan="2"
+                                    style="
+                                        border-left:1px solid black;
+                                        border-right:1px solid black;
+                                        border-top:none;
+                                        border-bottom:none;
+                                        height:30px;
+                                        text-align:left;
+                                        vertical-align:middle;
+                                        white-space: normal;
+                                        line-height: 1.05;    
+                                        padding: 0 0 0 4px; !important;    
+                                        margin: 0 !important;
+                                    ">
+                                    備 註：
+                                    <t t-if="page + 1 == page_count">
+                                        <t t-foreach="lines.filtered(lambda l: l.display_type == 'line_note')" t-as="note">
+                                            <t t-esc="note.name"/>&#160;&#160;&#8201;
+                                        </t>
+                                    </t>
+                                </td>
+                            </tr>
+
+                            <!-- 附加要求 -->
+                            <tr>
+                                <td rowspan="11" class="left attach-title">附 加 要 求：</td>
+                                <td style="border-bottom:none;">
+                                    一、包裝要求：包裝材料、包裝方式、標識要求等等。
+                                </td>
+                            </tr>
+
+                            <!-- 偽細線 -->
+                            <tr>
+                                <td style="padding:0; height:0.8px; background:black; border:none;"></td>
+                            </tr>
+
+                            <tr>
+                                <td style="border-bottom:none; border-top:none;">
+                                    二、進料檢驗要求：抽樣、全檢、材質證明、檢驗證明、出廠證明等等。
+                                </td>
+                            </tr>
+
+                            <!-- 偽細線 -->
+                            <tr>
+                                <td style="padding:0; height:0.8px; background:black; border:none;"></td>
+                            </tr>
+
+                            <tr>
+                                <td style="border-bottom:none; border-top:none;">
+                                    三、賠償要求：法令責任。
+                                </td>
+                            </tr>
+
+                            <!-- 偽細線 -->
+                            <tr>
+                                <td style="padding:0; height:0.8px; background:black; border:none;"></td>
+                            </tr>
+
+                            <tr>
+                                <td style="border-bottom:none; border-top:none;">
+                                    四、運送地點：
+                                </td>
+                            </tr>
+
+                            <!-- 偽細線 -->
+                            <tr>
+                                <td style="padding:0; height:0.8px; background:black; border:none;"></td>
+                            </tr>
+
+                            <tr>
+                                <td style="border-bottom:none; border-top:none;">
+                                    五、交貨方式：整批、分批等等。
+                                </td>
+                            </tr>
+
+                            <!-- 偽細線 -->
+                            <tr>
+                                <td style="padding:0; height:0.8px; background:black; border:none;"></td>
+                            </tr>
+
+                            <tr>
+                                <td style="border-top:none;">
+                                    六、其他：
+                                </td>
+                            </tr>
+                        </table>
+
+
+                        <!-- 公司資訊 -->
+                        <table>
+                            <tr class="no-top-border">
+                                <td>地 址：台南市永康區鹽和街167號</td>
+                            </tr>
+                            <tr>
+                                <td>電 話：06-2430647　傳 真：06-2438322</td>
+                            </tr>
+                        </table>
+
+                        <!-- 簽章 -->
+                        <table>
+                            <colgroup>
+                                <col style="width:60%"/>
+                                <col style="width:40%"/>
+                            </colgroup>
+                            <tr class="center no-top-border">
+                                <td>本 公 司 簽 章</td>
+                                <td>廠 商 確 認 回 覆</td>
+                            </tr>
+                            <tr style="height:55px;">
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </table>
+
+                        <!-- 換頁 -->
+                        <t t-if="page + 1 &lt; page_count">
+                            <div style="page-break-after: always;"></div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

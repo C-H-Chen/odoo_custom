@@ -1,0 +1,559 @@
+<odoo>
+  <template id="report_outsource_document" t-name="out_process_order.report_outsource_document">
+    <t t-call="web.basic_layout" t-options='{"header": false, "margin_top": "0mm", "margin_bottom": "0mm", "margin_left": "0mm", "margin_right": "0mm", "header_spacing": 0}'>
+      <t t-foreach="docs" t-as="doc">
+
+        <div class="section-outsource">
+            <style>
+             
+              .section-outsource html, .section-outsource body, .section-outsource .page, .section-outsource .o_report_layout, .section-outsource .article, .section-outsource .container {
+                margin:0 !important;
+                padding:0 !important;
+              }
+
+              
+              @page { margin:0mm !important; size:A4; }
+
+              .section-outsource .big-title {
+                  font-weight: normal;
+                  font-size: 17.5pt;
+                  text-align: center;
+                  margin: 0;
+                  padding: 0;
+              }
+              .section-outsource .right-title {
+                  font-weight: normal;
+                  font-size: 12pt;
+                  margin-left: 12px;
+              }
+              .section-outsource .bold { font-weight:bold; }
+
+              .section-outsource .right-header {
+                width:100%;
+                text-align:right;
+                white-space: nowrap;
+              }
+
+              .section-outsource .right-header .big-title,
+              .section-outsource .right-header .right-title {
+                display:inline-block;
+                vertical-align:middle;
+              }
+
+              .section-outsource .line-height {
+                height:24px;
+              }
+
+              .section-outsource .set-block {
+                page-break-inside: avoid;
+                break-inside: avoid;
+              }
+
+              .section-outsource .page {
+                page-break-after: always;
+              }
+
+              /* 表頭無框線 */
+              .section-outsource .header-table,
+              .section-outsource .header-table table,
+              .section-outsource .header-table tr,
+              .section-outsource .header-table td,
+              .section-outsource .header-table th,
+              .section-outsource .header-table thead,
+              .section-outsource .header-table tbody,
+              .section-outsource .header-table tfoot {
+                border:none !important;
+                border-collapse: collapse !important;
+                width:100%;
+              }
+
+              .section-outsource .header-table td .cell-inner {
+                border:none !important;
+                padding:4px 0 !important;
+                white-space: nowrap;
+              }
+
+              /* 內容表格 */
+              .section-outsource .content-table {
+                width:100%;
+                border-collapse: collapse;
+                margin-top:0px;
+                table-layout: fixed;
+              }
+
+              .section-outsource .content-table th,
+              .section-outsource .content-table td {
+                border:1px solid black;
+                text-align:center;
+                padding:0;
+              }
+
+              .section-outsource .content-table td {
+                height:24px;
+                line-height:24px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: clip;
+                vertical-align: middle;
+                max-width: 0;
+              }
+
+              .section-outsource .header-center-row {
+                width:100%;
+                text-align:center;
+                margin-top:0px;
+                margin-bottom:0px;
+              }
+
+              .section-outsource .date-cell { white-space: nowrap; }
+
+              .section-outsource .dashed-line {
+                border-top: 1px dashed black;
+                margin: 15px 0 6px 0;
+              }
+      
+              .section-outsource .wrap-value {
+                  white-space: normal !important;
+                  line-height: 1.05;
+                  padding: 0 !important;
+                  margin: 0 !important;
+              }
+            </style>
+
+            <t t-set="lines" t-value="[l for l in doc.order_line if not l.display_type]"/>
+            <t t-set="chunks" t-value="[(lines[i:i+5]) for i in range(0, len(lines), 5)]"/>
+            <t t-set="page_count" t-value="1 if len(chunks) == 0 else ((len(chunks) + 1) // 2)"/>
+
+            <t t-foreach="range(page_count)" t-as="p">
+              <div class="page" style="margin:0; padding:0; page-break-after: auto;">
+                
+                <t t-set="set_index" t-value="p * 2"/>
+                <t t-set="chunk" t-value="chunks[set_index] if set_index &lt; len(chunks) else []"/>
+                <t t-set="c_lines" t-value="list(chunk)"/>
+
+                <div class="set-block">
+
+                  <div class="right-header">
+                    <span class="big-title">琦霖光輝科技有限公司</span>
+                    <span class="right-title">　　　　　　　　　　　　　　　廠商聯</span>
+                  </div>
+
+                  <div class="header-center-row">
+                    <div class="big-title">外包加工單</div>
+                  </div>
+
+                  <table class="header-table">
+                    <tr>
+                      <td style="width:50%;">
+                        <div class="cell-inner bold">
+                          加工製程:
+                          <t t-if="len(c_lines) &gt; 0"><t t-esc="doc.origin or ''"/></t>
+                        </div>
+                      </td>
+                      <td style="width:50%;" class="date-cell">
+                        <div class="cell-inner bold">
+                            日期：
+                            <t t-if="len(c_lines) &gt; 0 and doc.date_approve">
+                              <t t-esc="doc.date_approve.year"/>&#160;年&#160;&#160;
+                              <t t-esc="doc.date_approve.month"/>&#160;月&#160;&#160;
+                              <t t-esc="doc.date_approve.day"/>&#160;日
+                            </t>
+                            <t t-else="">
+                              　　　年　　　月　　　日
+                            </t>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colspan="2">
+                        <div class="cell-inner bold">
+                          委外配合廠商:
+                          <t t-if="len(c_lines) &gt; 0"><t t-esc="doc.partner_id.name or ''"/></t>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table class="content-table">
+                    <tr class="bold">
+                      <td style="width:25%;">品&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;名</td>
+                      <td style="width:25%;">數&#160;&#160;&#160;&#160;量 /PCS</td>
+                      <td style="width:25%;">重量/KG</td>
+                      <td style="width:25%;">加工規格</td>
+                    </tr>
+                    <t t-foreach="range(5)" t-as="i">
+                      <tr class="line-height">
+                        <td><div class="wrap-value"><t t-if="i &lt; len(c_lines)"><t t-esc="c_lines[i].product_id.categ_id.name or ''"/></t></div></td>
+                        <td><t t-if="i &lt; len(c_lines)"><t t-esc="c_lines[i].product_qty or ''"/></t></td>
+                        <td><t t-if="i &lt; len(c_lines)"><t t-esc="c_lines[i].product_uom.name or ''"/></t></td>
+                        <td><div class="wrap-value"><t t-if="i &lt; len(c_lines)"><t t-esc="c_lines[i].product_id.display_name or ''"/></t></div></td>
+                      </tr>
+                    </t>
+                    <tr class="line-height"><td colspan="4"></td></tr>
+                  </table>
+
+                  <div class="right-header" style="margin-top:5px;">
+                    <span class="big-title">琦霖光輝科技有限公司</span>
+                    <span class="right-title">　　　　　　　　　　　　　　　自存聯</span>
+                  </div>
+
+                  <div class="header-center-row">
+                    <div class="big-title">外包加工單</div>
+                  </div>
+
+                  <table class="header-table">
+                    <tr>
+                      <td style="width:50%;">
+                        <div class="cell-inner bold">
+                          加工製程:
+                          <t t-if="len(c_lines) &gt; 0"><t t-esc="doc.origin or ''"/></t>
+                        </div>
+                      </td>
+                      <td style="width:50%;" class="date-cell">
+                        <div class="cell-inner bold">
+                            日期：
+                            <t t-if="len(c_lines) &gt; 0 and doc.date_approve">
+                              <t t-esc="doc.date_approve.year"/>&#160;年&#160;&#160;
+                              <t t-esc="doc.date_approve.month"/>&#160;月&#160;&#160;
+                              <t t-esc="doc.date_approve.day"/>&#160;日
+                            </t>
+                            <t t-else="">
+                              　　　年　　　月　　　日
+                            </t>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colspan="2">
+                        <div class="cell-inner bold">
+                          委外配合廠商:
+                          <t t-if="len(c_lines) &gt; 0"><t t-esc="doc.partner_id.name or ''"/></t>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table class="content-table">
+                    <tr class="bold">
+                      <td style="width:25%;">品&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;名</td>
+                      <td style="width:25%;">數&#160;&#160;&#160;&#160;量 /PCS</td>
+                      <td style="width:25%;">重量/KG</td>
+                      <td style="width:25%;">加工規格</td>
+                    </tr>
+                    <t t-foreach="range(5)" t-as="i">
+                      <tr class="line-height">
+                        <td><div class="wrap-value"><t t-if="i &lt; len(c_lines)"><t t-esc="c_lines[i].product_id.categ_id.name or ''"/></t></div></td>
+                        <td><t t-if="i &lt; len(c_lines)"><t t-esc="c_lines[i].product_qty or ''"/></t></td>
+                        <td><t t-if="i &lt; len(c_lines)"><t t-esc="c_lines[i].product_uom.display_name or ''"/></t></td>
+                        <td><div class="wrap-value"><t t-if="i &lt; len(c_lines)"><t t-esc="c_lines[i].product_id.display_name or ''"/></t></div></td>
+                      </tr>
+                    </t>
+                    <tr class="line-height"><td colspan="4"></td></tr>
+                  </table>
+
+                </div>
+
+                <div class="dashed-line"></div>
+
+                <t t-set="set_index2" t-value="p * 2 + 1"/>
+                <t t-set="chunk2" t-value="chunks[set_index2] if set_index2 &lt; len(chunks) else []"/>
+                <t t-set="c2_lines" t-value="list(chunk2)"/>
+
+                <div class="set-block">
+
+                  <div class="right-header">
+                    <span class="big-title">琦霖光輝科技有限公司</span>
+                    <span class="right-title">　　　　　　　　　　　　　　　廠商聯</span>
+                  </div>
+
+                  <div class="header-center-row">
+                    <div class="big-title">外包加工單</div>
+                  </div>
+
+                  <table class="header-table">
+                    <tr>
+                      <td style="width:50%;">
+                        <div class="cell-inner bold">
+                          加工製程:
+                          <t t-if="len(c2_lines) &gt; 0"><t t-esc="doc.origin or ''"/></t>
+                        </div>
+                      </td>
+                      <td style="width:50%;" class="date-cell">
+                        <div class="cell-inner bold">
+                            日期：
+                            <t t-if="len(c2_lines) &gt; 0 and doc.date_approve">
+                              <t t-esc="doc.date_approve.year"/>&#160;年&#160;&#160;
+                              <t t-esc="doc.date_approve.month"/>&#160;月&#160;&#160;
+                              <t t-esc="doc.date_approve.day"/>&#160;日
+                            </t>
+                            <t t-else="">
+                              　　　年　　　月　　　日
+                            </t>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colspan="2">
+                        <div class="cell-inner bold">
+                          委外配合廠商:
+                          <t t-if="len(c2_lines) &gt; 0"><t t-esc="doc.partner_id.name or ''"/></t>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table class="content-table">
+                    <tr class="bold">
+                      <td style="width:25%;">品&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;名</td>
+                      <td style="width:25%;">數&#160;&#160;&#160;&#160;量 /PCS</td>
+                      <td style="width:25%;">重量/KG</td>
+                      <td style="width:25%;">加工規格</td>
+                    </tr>
+                    <t t-foreach="range(5)" t-as="i">
+                      <tr class="line-height">
+                        <td><div class="wrap-value"><t t-if="i &lt; len(c2_lines)"><t t-esc="c2_lines[i].product_id.categ_id.name or ''"/></t></div></td>
+                        <td><t t-if="i &lt; len(c2_lines)"><t t-esc="c2_lines[i].product_qty or ''"/></t></td>
+                        <td><t t-if="i &lt; len(c2_lines)"><t t-esc="c2_lines[i].product_uom.name or ''"/></t></td>
+                        <td><div class="wrap-value"><t t-if="i &lt; len(c2_lines)"><t t-esc="c2_lines[i].product_id.display_name or ''"/></t></div></td>
+                      </tr>
+                    </t>
+                    <tr class="line-height"><td colspan="4"></td></tr>
+                  </table>
+
+                  <div class="right-header" style="margin-top:5px;">
+                    <span class="big-title">琦霖光輝科技有限公司</span>
+                    <span class="right-title">　　　　　　　　　　　　　　　自存聯</span>
+                  </div>
+
+                  <div class="header-center-row">
+                    <div class="big-title">外包加工單</div>
+                  </div>
+
+                  <table class="header-table">
+                    <tr>
+                      <td style="width:50%;">
+                        <div class="cell-inner bold">
+                          加工製程:
+                          <t t-if="len(c2_lines) &gt; 0"><t t-esc="doc.origin or ''"/></t>
+                        </div>
+                      </td>
+                      <td style="width:50%;" class="date-cell">
+                        <div class="cell-inner bold">
+                            日期：
+                            <t t-if="len(c2_lines) &gt; 0 and doc.date_approve">
+                              <t t-esc="doc.date_approve.year"/>&#160;年&#160;&#160;
+                              <t t-esc="doc.date_approve.month"/>&#160;月&#160;&#160;
+                              <t t-esc="doc.date_approve.day"/>&#160;日
+                            </t>
+                            <t t-else="">
+                              　　　年　　　月　　　日
+                            </t>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colspan="2">
+                        <div class="cell-inner bold">
+                          委外配合廠商:
+                          <t t-if="len(c2_lines) &gt; 0"><t t-esc="doc.partner_id.name or ''"/></t>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table class="content-table">
+                    <tr class="bold">
+                      <td style="width:25%;">品&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;名</td>
+                      <td style="width:25%;">數&#160;&#160;&#160;&#160;量 /PCS</td>
+                      <td style="width:25%;">重量/KG</td>
+                      <td style="width:25%;">加工規格</td>
+                    </tr>
+                    <t t-foreach="range(5)" t-as="i">
+                      <tr class="line-height">
+                        <td><div class="wrap-value"><t t-if="i &lt; len(c2_lines)"><t t-esc="c2_lines[i].product_id.categ_id.name or ''"/></t></div></td>
+                        <td><t t-if="i &lt; len(c2_lines)"><t t-esc="c2_lines[i].product_qty or ''"/></t></td>
+                        <td><t t-if="i &lt; len(c2_lines)"><t t-esc="c2_lines[i].product_uom.name or ''"/></t></td>
+                        <td><div class="wrap-value"><t t-if="i &lt; len(c2_lines)"><t t-esc="c2_lines[i].product_id.display_name or ''"/></t></div></td>
+                      </tr>
+                    </t>
+                    <tr class="line-height"><td colspan="4"></td></tr>
+                  </table>
+
+                </div>
+
+              </div>
+              <div t-if="p == page_count - 1" style="page-break-after: always;"></div>
+            </t>
+        </div>
+
+        <div class="section-elec">
+            <style>
+                /* 加上 .section-elec 前綴以隔離樣式 */
+                .section-elec .cards-grid {
+                    width: 100%;
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                }
+
+                .section-elec .cards-grid td {
+                    width: 25%; /* 4欄 */
+                    padding: 0;
+                    vertical-align: top;
+                    border: 1px solid #000;
+                    height: 1px; 
+                }
+
+                .section-elec .cards-grid tr:not(:first-child) td { border-top: 0; }
+                .section-elec .cards-grid td:not(:first-child) { border-left: 0; }
+
+                .section-elec .material-table {
+                    width: 100%;
+                    height: 100%; /* 撐滿外層 td */
+                    border-collapse: collapse; 
+                    table-layout: fixed;
+                    font-size: 15px;
+                }
+
+                .section-elec .material-table td {
+                    padding: 0 4px;
+                    border: 1px solid #000;
+                    border-left: 0;
+                    border-right: 0;
+                    min-height: 28px;
+                    line-height: 28px;
+                    vertical-align: middle;
+                    white-space: nowrap;
+                    overflow: hidden;
+                }
+
+                .section-elec .material-table tr:first-child td { border-top: 0; }
+                .section-elec .material-table tr:last-child td { border-bottom: 0; }
+
+                .section-elec .company-name {
+                    text-align: center;
+                    font-size: 15px; 
+                    font-weight: normal;
+                    height: 28px;
+                    line-height: 28px;
+                }
+
+                .section-elec .field-name {
+                    text-align: left; 
+                    padding-left: 5px;
+                }
+
+                .section-elec .value-cell {
+                    text-align: left;
+                    padding-left: 0;
+                }
+
+                .section-elec .sync-row td {
+                    height: auto !important;
+                    min-height: 28px;
+                    line-height: 28px;
+                    vertical-align: top;
+                }
+
+                .section-elec .sync-row .wrap-value {
+                    white-space: normal !important;
+                    line-height: 1.05;
+                    margin: 0;
+                    padding: 6px 0 0 0;
+                    word-break: break-word;
+                    min-height: 28px;
+                    display: block;
+                }
+
+                .section-elec .sync-row td:has(.wrap-value:nth-child(n)) .wrap-value {
+                    padding-top: 0;
+                }
+            </style>
+
+            <t t-set="lines" t-value="doc.order_line"/>
+            <t t-set="total_count" t-value="len(lines)"/>
+            <t t-set="total_pages" t-value="int((total_count - 1) / 28) + 1 if total_count > 0 else 1"/>
+
+            <t t-foreach="range(total_pages)" t-as="page_idx">
+                <div class="page">
+                    <table class="cards-grid">
+                        <tbody>
+                            <t t-foreach="range(7)" t-as="r">
+                                <tr>
+                                    <t t-foreach="range(4)" t-as="c">
+                                        
+                                        <t t-set="idx" t-value="(page_idx * 28) + (r * 4) + c"/>
+                                        <t t-set="line" t-value="lines[idx] if idx &lt; len(lines) else False"/>
+
+                                        <td>
+                                            <table class="material-table">
+                                                
+                                                <colgroup>
+                                                    <col style="width: 19%;"/> 
+                                                    <col style="width: 14.5%;"/>
+                                                    <col style="width: 66.5%;"/>
+                                                </colgroup>
+
+                                                <tr>
+                                                    <td colspan="3" class="company-name">琦霖光輝科技有限公司</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="field-name">日期 :</td>
+                                                    <td colspan="2" class="value-cell">
+                                                        <t t-if="line and doc.date_approve">
+                                                            <span t-esc="doc.date_approve.year"/> 年
+                                                            <span t-esc="doc.date_approve.month"/> 月
+                                                            <span t-esc="doc.date_approve.day"/> 日
+                                                        </t>
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="field-name">品名 :</td>
+                                                    <td colspan="2" class="value-cell">
+                                                        <div class="wrap-value">
+                                                            <t t-if="line">
+                                                                <t t-esc="line.product_id.categ_id.name or ''"/>
+                                                            </t>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="field-name">重量 :</td>
+                                                    <td colspan="2" class="value-cell">
+                                                        <t t-if="line">
+                                                            <t t-esc="line.product_qty and (str(line.product_qty) + '　')  or ''"/>
+                                                            <t t-esc="line.product_uom and '(' + line.product_uom.name + ')' or ''"/>
+                                                        </t>
+                                                    </td>
+                                                </tr>
+
+                                                <tr class="sync-row">
+                                                    <td colspan="2" class="field-name">電鍍規格 :</td>
+                                                    <td class="value-cell">
+                                                        <div class="wrap-value">
+                                                            <t t-if="line">
+                                                                <t t-esc="line.product_id.display_name or ''"/>
+                                                            </t>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                            </table>
+                                        </td>
+                                    </t>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    
+                    <p style="page-break-after:always;" t-if="page_idx &lt; (total_pages - 1)"/>
+                </div>
+            </t>
+        </div>
+
+      </t>
+    </t>
+  </template>
+</odoo>
