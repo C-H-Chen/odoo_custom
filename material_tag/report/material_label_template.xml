@@ -194,7 +194,7 @@
                                                 <div class="material-card">
                                                     <table class="material-table">
                                                         <tr>
-                                                            <td colspan="4" class="company-name">琦霖光輝科技有限公司</td>
+                                                            <td colspan="4" class="company-name">xxxxxx有限公司</td>
                                                         </tr>
                                                         <tr>
                                                             <td colspan="4" class="label-title">材 料 標 示 卡 QR-08-XXX-01</td>
@@ -273,4 +273,5 @@
 
         </t>
     </template>
+
 </odoo>
