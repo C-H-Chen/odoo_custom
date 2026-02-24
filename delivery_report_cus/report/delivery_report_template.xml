@@ -1,0 +1,567 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <template id="report_delivery_report_template"
+              t-name="delivery_report_cus.report_delivery_report_template">
+
+      <t t-call="web.basic_layout"/>
+        <t t-set="docs_data" t-value="docs_data or [{}]"/>
+        <t t-foreach="docs_data" t-as="data">
+
+          <!--
+            分頁邏輯說明：
+            - lines: 原始所有明細
+            - first_limit: 第一頁最大列數 
+            - next_limit: 後續每頁最大列數
+            - rem: 剩餘明細（第一頁之後）
+            - pages: 剩餘需要的頁數 (不包含第一頁)
+            - total_pages: 第一頁 + pages
+          -->
+          <t t-set="lines" t-value="data.get('lines') or []"/>
+          <t t-set="first_limit" t-value="10"/>
+          <t t-set="next_limit" t-value="10"/>
+          <!-- 使用與第一頁相同的 page_size -->
+          <t t-set="page_size" t-value="first_limit"/>
+          <t t-set="total_pages" t-value="1 if len(lines) == 0 else ((len(lines) + page_size - 1) // page_size)"/>
+
+          <!-- 依頁數產生實際 page(s) -->
+          <t t-foreach="range(total_pages)" t-as="page_index">
+            <div class="article"
+               t-attf-style="#{ 'page-break-after: always;' if page_index &lt; (total_pages - 1) else 'page-break-after: auto;' }">
+
+              <div class="page">
+                <style>
+                  /* 頁面尺寸與內框 size: 210mm 140mm; margin: 0;  */
+                  @page { margin: 0mm !important;}
+                  html, body {
+                    font-family: "Noto Sans CJK TC", "Microsoft JhengHei", "WenQuanYi Micro Hei", "DejaVu Sans", sans-serif;
+                    font-size:11pt; margin:0; padding:0; color:#000;
+                  }
+                  /* 移除強制 min-height，讓內容決定高度，避免多出空白頁.page { padding:0; box-sizing:border-box; } */
+                  
+
+                  .title { 
+                          text-align:center; 
+                          font-size:20.5pt;     
+                          margin: 0 !important;
+                          padding: 0 !important; 
+                          text-decoration: underline;
+                  }
+
+                  .company-info, .company-info tr, .company-info td {
+                    border: 0 !important;
+                    padding: 0;!important;
+                    margin-top: 0 !important;
+                    vertical-align: top;
+                  }
+                  .company-info { border-collapse: separate !important; white-space:nowrap; }
+
+                  /* 單表格設定 */
+                  .single-table {
+                    width:100%;
+                    border: none !important;
+                    border-collapse:collapse!important;
+                    border-spacing: 0 !important;
+                    font-size:11pt;
+                    page-break-inside: auto; /* 允許表格在頁內斷 */
+                  }
+
+                  /* 確保 thead/tbody 正確處理以利穩定斷頁*/
+                  .single-table thead { display: table-header-group; }
+                  .single-table tbody { display: table-row-group; }
+                  .single-table tfoot { display: table-row-group; }
+
+                  /* 標題欄保留上下框線 */
+                  .single-table th {
+                    border: none !important;
+                    padding:12px 4px;
+                    vertical-align:top;
+                    word-break:break-word;
+                    text-align:center;
+                    font-weight: normal !important;
+                  }
+
+                  /*
+                    把 td 的 padding 轉移給 .cell-inner，td 本身設為無內距
+                    並用 .cell-inner 統一高度與行內置中（或自訂）
+                  */
+                  .single-table tbody tr,
+                  .single-table tbody tr.empty-row {
+                      border-top: none !important;
+                      border-bottom: none !important;
+                      border: none !important;
+                  }
+                  .single-table tbody tr td,
+                  .single-table tbody tr.empty-row td {
+                      border: none !important;
+                      padding:0 !important;          /* td 不留內距 */
+                      vertical-align:top;
+                      word-break:break-word;
+                  }
+                  .company-info td div {
+                    margin-top: 0 !important;
+                    margin-bottom: 0 !important;
+                       /* 與 font-size 對應，視需求調整 line-height: 8pt;*/
+                  }
+                  /* 內部 cell wrapper：固定高度、統一內距、內容超出隱藏 */
+                  .single-table .cell-inner {
+                      display: block;
+                      font-size: 11pt !important;
+                      box-sizing: border-box;
+                      height: 20px;       
+                      line-height: 18px;  /* 垂直置中內容（若需要） */
+                      padding: 0 1px;     /* 左右內距 */
+                      overflow: hidden;   /* 超長或換行內容隱藏，確保高度一致 */
+                      white-space: normal; 
+                      border: none !important;
+                  }
+
+                  /* 空白補滿列內部也使用 cell-inner（讓空列高度一致） */
+                  .empty-row td .cell-inner { height: 20px; font-size: 11pt !important;}
+
+                  /* 不在 tr 上強制 avoid，改交給 table 的分頁策略 */
+                  /* 移除: .single-table tr, .single-table tbody tr { page-break-inside: avoid; } */
+
+                  .single-table tr.client-row { border:none !important; padding:0 !important; }
+                  .single-table tr.client-row td { border:none !important; padding:2px 0 !important; }
+                  
+                  .single-table tr.totals-row td {
+                      border: none !important;
+                      border-bottom: none !important;
+                      padding: 0 !important; 
+                      font-size:11pt;
+                  }
+                  .client-spacer-row td {
+                      border: none !important;       /* 不要邊框 */
+                      padding: 0 !important;         /* 不留內距 */
+                  }
+                  .client-spacer-row .cell-inner {
+                      height: 9.9px;                 
+                      line-height: 9.9px;             /* 對齊用 */
+                      font-size:9.9pt;
+                      overflow: hidden;
+                  }
+
+                  .company-info-right {
+                      height: auto;   
+                      position: relative;
+                      padding: 0 !important;
+                      margin: 0 !important;
+                  }
+
+                  .company-info-right .ci-row {
+                      position: relative;
+                      left: 0;
+                      right: 0;
+                      margin: 0 !important;
+                      padding: 0 !important;
+                      line-height: 10pt;  
+                  }
+
+                  .addr  { top: 0; }
+                  .email { bottom: 0; }
+
+                  /* 垂直置中 */
+                  .phone {
+                      top: 5px; 
+                      transform: none;
+                  }
+
+                  /* 貨單附註列邊框 */
+                  .single-table tr.note-row td {
+                      border: none !important;
+                      height: 30px;       
+                      vertical-align:   top;
+                      font-size:11pt;
+                  }
+
+                  .client-row .client-wrapper { position: relative; height: 15px;}
+                  .client-row .client-cell {
+                    position: absolute;
+                    font-size: 11pt;
+                    top: 0 !important;          
+                    line-height: 13px !important;
+                    margin: 0 !important;
+                    white-space: nowrap !important;
+                  }
+
+                  .client-first  { left: 5.7mm; width: 110mm; }
+                  .client-sec    { left: 119mm; width: 68mm; }
+                  .client-third  { left: 190mm; width: 19mm; ;/* right: 0右邊界到父容器右邊 */ }
+                  .client-wide   { left: 5.7mm; max-width: 183mm; white-space:nowrap; }
+
+                  .client-row .client-cell.client-first,
+                  .client-row .client-cell.client-wide {
+                    transform: translateY(0.5mm);
+                    -webkit-transform: translateY(0.5mm);
+                  }
+                  .client-value { display:inline-block; min-width:0; }
+
+                  .first-copy {
+                    position:absolute;
+                    top:45px;
+                    right:-5mm;
+                    font-size:11pt;
+                    text-align:center;
+                    writing-mode: vertical-rl;
+                    text-orientation: upright;
+                    margin-top: 137px;
+                  }
+                  .first-copy div { line-height:11pt; }
+
+                  .hide-label { visibility:hidden; }
+
+                  .totals-area div.tot-line { margin-bottom:8px; text-align:center; }
+
+                  .single-table .cell-inner.multiline {
+                      height: 74px !important;           
+                      line-height: 19px !important;    
+                      font-size: 11pt !important;
+                      vertical-align: middle;
+                      white-space: normal !important;    
+                      overflow: visible !important;      
+                      padding: 4px 6px !important;       /*margin-right:73px; 與明細左右距離一致 */
+                      box-sizing: border-box;
+                  }
+                  .sign-vertical { text-align:left; line-height:14pt; }
+                  .sign-vertical div { display:block; }
+
+                  .driver { text-align:right;  margin-top:0px; font-size:11pt; }
+                  
+                  .driver.hide {
+                      visibility: hidden !important;
+                  }
+
+                  .hide-cell {
+                      visibility: hidden !important;
+                      height: 14px; /* 與原本行高一致 */
+                      display: inline-block; /* 確保仍占空間 */
+                  }
+                  html, body, .page, .single-table {
+                      margin: 0 !important;
+                      padding: 0 !important;
+                  }
+                  .header, .o_report_header, .report_header {
+                    display: none !important;
+                    height: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    
+                  }
+                  /* 對所有 table / tr / td / th / thead / tbody /tfoot 隱藏邊框 */
+                  table, thead, tbody, tfoot, tr, th, td {
+                      border: none !important;
+                  }
+
+                  /* 移除 table 本身外框 */
+                  table {
+                      border-collapse: collapse !important;
+                      border-spacing: 0 !important;
+                  }
+
+                  /* 確保 class 內部也無邊框 */
+                  .single-table, .company-info {
+                      border: none !important;
+                      border-collapse: collapse !important;
+                  }
+
+                  /* td 內 wrapper */
+                  .cell-inner {
+                      border: none !important;
+                  }
+
+                </style>
+
+                <div class="title"><span style="visibility:hidden;">出&#160;&#160;&#160;&#160;貨&#160;&#160;&#160;&#160;單</span></div>
+
+                <table class="company-info" style="margin-bottom:1px; border:none; width:100%;">
+                  <tr>
+                    <td style="width:60%; border:none; vertical-align:top;">
+                      <div style="font-size:19pt; margin-bottom:0px;">
+                        <span style="visibility:hidden;"><t t-esc="data['company']['name']"/></span>
+                      </div>
+                    </td>
+                    <td class="company-info-right" style="width:40%; text-align:right;">
+                      <div class="ci-row addr">
+                        <span class="hide-cell">地址&#160;&#160;:&#160;&#160;</span>
+                            <span style="font-size:9pt;line-height: 8pt;visibility:hidden;"><t t-esc="'一二三四五六七八九十一二三四 783 行 77 個'"/></span></div>
+                        <!-- <t t-esc="data['company']['street_city']"/></div> -->
+                      <div class="ci-row phone">
+                        <span style="display:inline-block; margin-right:23px;line-height: 8pt;">
+                          <span class="hide-cell">電話&#160;&#160;:&#160;&#160;</span>
+                            <span style="line-height: 10pt;visibility:hidden;"> 
+                              <t t-esc="'01-1111111'"/>
+                            </span>
+                          <!-- <t t-esc="data['company']['phone']"/> -->
+                        </span>
+                        <span style="display:inline-block; margin-right:0;line-height: 8pt;">
+                          <span class="hide-cell">傳真&#160;&#160;:&#160;&#160;</span>
+                            <span style="line-height: 9.5pt;visibility:hidden;">   
+                              <t t-esc="' 01-1111111'"/>
+                            </span>
+                          <!-- data['company']['fax'] or -->
+                        </span>
+                      </div>
+                      <div class="ci-row email">
+                        <span style="display:inline-block;">
+                          <span class="hide-cell">
+                            E-ma&#160; i l&#160;&#160;:&#160;&#160;
+                          </span>  
+                        </span>
+                          <span style="font-size:10pt;line-height: 10pt;visibility:hidden;">
+                            <t t-esc="'a b c d e f g h i . k l @ g m a i l . c o m'"/>
+                          </span>
+                        <!-- <t t-esc="data['company']['email']"/>  -->
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- <div class="first-copy">
+                  <div>第</div><div>一</div><div>聯</div><div>:</div>
+                  <div>公</div><div>司</div><div>留</div><div>存</div><div>聯</div>
+                </div> -->
+
+                <table class="single-table">
+                  <colgroup>
+                    <col class="c-prodcode" style="width:18%"/>
+                    <col class="c-name" style="width:31.6%"/>
+                    <col class="c-qty" style="width:11%"/>
+                    <col class="c-uom" style="width:6%"/> 
+                    <col class="c-unitpr" style="width:11.3%"/>
+                    <col class="c-amt" style="width:12%"/>
+                    <col class="c-note" style="width:10.1%"/>
+                  </colgroup>
+
+                  <!-- 客戶資訊列 -->
+                  <!-- <tr class="client-spacer-row">
+                    <td colspan="7"><div class="cell-inner"></div></td>
+                  </tr> -->
+                  <tr class="client-row">
+                    <td colspan="7" style="padding:0px 8px;">
+                      <div class="client-wrapper">
+                        <div class="client-cell client-first">
+                            <span class="hide-cell">客戶名稱: </span>
+                            <t t-esc="data['partner']['name'] or ''"/>
+                        </div>
+                        <div class="client-cell client-sec">
+                            <span class="hide-cell">客戶編號: </span>
+                            <t t-esc="data['partner']['ref'] or ''"/>
+                        </div>
+                        <div class="client-cell client-third">
+                            <span class="hide-cell">單據日期: </span>
+                            <t t-esc="data['date'] or ''"/>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr class="client-row">
+                    <td colspan="7" style="padding:0px 8px;">
+                      <div class="client-wrapper">
+                        <div class="client-cell client-first">
+                            <span class="hide-cell">統一編號: </span>
+                            <t t-esc="data['partner']['vat'] or ''"/>
+                        </div>
+                        <div class="client-cell client-sec">
+                            <span class="hide-cell">連絡電話: </span>
+                            <t t-esc="data['partner']['phone'] or ''"/>
+                        </div>
+                        <div class="client-cell client-third">
+                            <span class="hide-cell">單據號碼: </span>
+                              <span style="font-size:0.9em;">
+                                <t t-esc="data['name'] or ''"/>
+                              </span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr class="client-row">
+                    <td colspan="7" style="padding:0px 8px;">
+                      <div class="client-wrapper">
+                        <div class="client-cell client-first">
+                            <span class="hide-cell">聯&#8201;&#8201;絡&#8201;&#8201;&#8201;人: </span>
+                            <t t-esc="data['partner']['contact'] or ''"/>
+                        </div>
+                        <div class="client-cell client-sec">
+                            <span class="hide-cell">傳&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;真: </span>
+                            <t t-esc="(data['partner']['website'] or '').replace('http://','').replace('https://','')"/>
+                        </div>
+                        <div class="client-cell client-third">
+                            <span class="hide-cell">製&#8201;&#8201;表&#8201;&#8201;&#8201;人: </span>
+                              <t t-esc="''"/>
+                            <!-- <t t-esc="data['user_name'] or ''"/> -->
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr class="client-row">
+                    <td colspan="7" style="padding:0px 8px;">
+                      <div class="client-wrapper">
+                        <div class="client-cell client-wide">
+                            <span class="hide-cell">送貨地址: </span>
+                            <t t-esc="data['partner']['street_city'] or ''"/>
+                        </div>
+                        <div class="client-cell client-third">
+                            <span class="hide-cell">發票號碼: </span>
+                              <t t-esc="''"/>
+                            <!-- <t t-esc="data['invoice_ref'] or ''"/> -->
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="client-spacer-row">
+                    <td colspan="7"><div class="cell-inner"></div></td>
+                  </tr>
+                  <tr class="client-spacer-row">
+                    <td colspan="7"><div class="cell-inner"></div></td>
+                  </tr>
+                  
+                  <!-- 明細表標題 -->
+                  <tr>
+                    <th><span class="hide-cell">產&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;品&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;編&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;號</span></th>
+                    <th><span class="hide-cell">品&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;名&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;/&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;規&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;格</span></th>
+                    <th><span class="hide-cell">數&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;量</span></th>
+                    <th><span class="hide-cell">單位</span></th>
+                    <th><span class="hide-cell">單&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;價</span></th>
+                    <th><span class="hide-cell">⾦&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;額</span></th>
+                    <th><span class="hide-cell">貨品附註</span></th>
+                  </tr>
+
+                  <tbody>
+                    <!-- 決定本頁要顯示的明細 chunk -->
+                    <t t-set="start" t-value="page_index * page_size"/>
+                    <t t-set="chunk" t-value="lines[start:start + page_size]"/>
+
+                    <!-- 列印本頁 chunk（每個 td 內容包 cell-inner） -->
+                   <t t-foreach="enumerate(chunk, start=1)" t-as="item">
+                      <t t-set="index" t-value="item[0]"/>
+                      <t t-set="line" t-value="item[1]"/>
+                      <tr>
+                        <!-- 合併產品欄位與品名/規格欄位，前面加序號 -->
+                        <td colspan="2">
+                          <div class="cell-inner" style="font-size: 13.5pt !important;">
+                            <t t-esc="(line['seq'] + '. ') if line.get('seq') else ''"/>
+                            <t t-esc="line['product_code'] or ''"/>
+                          </div>
+                        </td>
+                        <td><div class="cell-inner"><t t-esc="line['qty'] or ''"/></div></td>
+                        <td><div class="cell-inner"><t t-esc="line['uom'] or ''"/></div></td>
+                        <td>
+                          <div class="cell-inner">
+                            <t t-esc="''"/>
+                            <!-- <span style="visibility:hidden;">
+                              <t t-esc="line['price_unit'] or ''"/>
+                            </span> -->
+                          </div>
+                        </td>
+                        <td>
+                          <div class="cell-inner">
+                            <t t-esc="''"/>
+                            <!-- <span style="visibility:hidden;">
+                              <t t-esc="line['subtotal'] or ''"/>
+                            </span> -->
+                          </div>
+                        </td>
+                          <t t-if="index == 1">
+                            <td t-att-rowspan="page_size" style="vertical-align: top !important; padding: 0 !important; border: none !important;">
+                              <div style="margin-top: 0px; padding-left: 6px; padding-right: 6px; width: 100%; text-align: left;white-space: pre-wrap;"><t t-esc="line['client_order_ref'] or ''"/></div>
+                            </td>
+                          </t>
+                      </tr>
+                    </t>
+
+                    <!-- 若本頁為最後頁 (page_index == total_pages-1) 則補空白列至 target_lines (使 totals 在固定位置) -->
+                    <t t-if="page_index == (total_pages - 1)">
+                      <!-- 最後頁目標列數使用 page_size（和第一頁一致） -->
+                      <t t-set="target_lines" t-value="page_size"/>
+                      <t t-set="current_count" t-value="len(chunk)"/>
+                      <t t-set="empty_count" t-value="(target_lines - current_count) if (target_lines - current_count) &gt; 0 else 0"/>
+                      <t t-if="empty_count &gt; 0">
+                        <t t-foreach="range(empty_count)" t-as="i">
+                          <tr class="empty-row">
+                            <td><div class="cell-inner"></div></td>
+                            <td><div class="cell-inner"></div></td>
+                            <td><div class="cell-inner"></div></td>
+                            <td><div class="cell-inner"></div></td>
+                            <td><div class="cell-inner"></div></td>
+                            <td><div class="cell-inner"></div></td>
+                          </tr>
+                        </t>
+                      </t>
+                    </t>
+                  </tbody>
+
+                  <!-- 只有最後一頁顯示備註 / 合計 / 簽收（但每頁都保留欄位結構） -->
+                  <tr class="totals-row">
+                    <!-- 備註：佔左側 3 欄 -->
+                    <td colspan="3" style="padding:0 6px 0 6px; vertical-align:top; text-align:left; white-space:pre-line;">
+                      <div style="margin-top:-13px; margin-bottom:0;">
+                        <span class="hide-cell">備註:</span>
+                      </div>
+                      <div t-att-style="'margin-top:-10px; visibility: visible;' if page_index == (total_pages - 1) else 'margin-top:-10px; visibility: hidden;'">
+                        <t t-esc="data.get('note') or ''"/>
+                      </div>
+                    </td>
+
+                    <!-- 合計標籤：佔 2 欄 -->
+                    <td colspan="2" style="padding:0; vertical-align:top;">
+                      <div class="cell-inner multiline">
+                        <div class="tot-line"><span class="hide-cell">合&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;計</span></div>
+                        <div class="tot-line"><span class="hide-cell">營&#160;&#160;&#160;&#160;&#160;&#160;&#160;業&#160;&#160;&#160;&#160;&#160;&#160;&#160;稅</span></div>
+                        <div class="tot-line"><span class="hide-cell">總&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;計</span></div>
+                      </div>
+                    </td>
+
+                    <!-- 合計數值欄 -->
+                    <td style="padding:0; vertical-align:top;">
+                      <div class="cell-inner multiline">
+                        <div class="tot-line" t-att-style="'text-align:left; visibility: visible;' if page_index == (total_pages - 1) else 'text-align:left; visibility: hidden;'">
+                          <t t-esc="''"/>
+                          <!-- <span style="visibility:hidden;"><t t-esc="data.get('amount_untaxed') or ''"/></span> -->
+                        </div>
+                        <div class="tot-line" t-att-style="'text-align:left; visibility: visible;' if page_index == (total_pages - 1) else 'text-align:left; visibility: hidden;'">
+                          <t t-esc="''"/>
+                          <!-- <span style="visibility:hidden;"><t t-esc="data.get('amount_tax') or ''"/></span> -->
+                        </div>
+                        <div class="tot-line" t-att-style="'text-align:left; visibility: visible;' if page_index == (total_pages - 1) else 'text-align:left; visibility: hidden;'">
+                          <t t-esc="''"/>
+                          <!-- <span style="visibility:hidden;"><t t-esc="data.get('amount_total') or ''"/></span> -->
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- 簽收欄 -->
+                    <td style="padding:0; vertical-align:top; border: none;">
+                      <div>
+                        <div><span class="hide-cell">簽</span></div>
+                        <div><span class="hide-cell">收</span></div>
+                        <div><span class="hide-cell">&#160;:</span></div>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- 貨單附註 -->
+                  <tr class="note-row">
+                    <td style="text-align:center; border: none;"><span class="hide-cell">貨&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;單&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;附&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;註</span></td>
+                    <td colspan="6" t-att-style="'border: none; visibility: visible;' if page_index == (total_pages - 1) else 'border: none; visibility: hidden;'"></td>
+                  </tr>
+
+                </table>
+
+                <!-- driver（司機） -->
+                <div class="driver" t-att-style="'padding-top:5px;padding-right:10px; visibility: visible;' if page_index == (total_pages - 1) else 'padding-top:5px;padding-right:10px; visibility: hidden;'">
+                    <span style="visibility:hidden;">司&#160;&#160;機&#160;&#160;:&#160;&#160;</span>
+                    <span style="text-align: right;visibility:hidden;"><t t-esc="'Admin'"/></span>
+                    <!-- <span style="text-align: right;visibility:hidden;"><t t-esc="data.get('driver_name', 'Admin')"/></span> -->
+                </div>
+
+              </div>
+            </div>
+          </t>
+      </t>
+    </template>
+  </data>
+</odoo>
