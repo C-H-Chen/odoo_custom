@@ -109,7 +109,7 @@
 
                                                 <tr class="header">
                                                     <td colspan="4" class="left">
-                                                        <span class="company-name">　　&#160;&#160;&#160;琦霖光輝科技有限公司</span>
+                                                        <span class="company-name">　　&#160;&#160;&#160;xxxxxx有限公司</span>
                                                         <span class="qr-code">　　　　　　　&#160;&#160; QR-07-XXX-01</span>
                                                     </td>
                                                 </tr>
@@ -211,4 +211,5 @@
             </t>
         </t>
     </template>
+
 </odoo>
