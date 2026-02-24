@@ -133,7 +133,7 @@ class PurchaseOrder(models.Model):
                 # 繪製單張卡片
                 # 1. 公司名稱
                 sheet.merge_range(start_row, start_col, start_row, start_col + 1, 
-                                  "琦霖光輝科技有限公司", company_format)
+                                  "xxxxxx有限公司", company_format)
                 
                 # 2. 日期
                 sheet.write(start_row + 1, start_col, "日期 :", label_format)
