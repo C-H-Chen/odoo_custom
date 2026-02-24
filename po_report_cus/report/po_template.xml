@@ -72,7 +72,7 @@
                             <img t-att-src="'/po_report_cus/static/src/img/chilin_logo.png'"
                                     style="height:30px; vertical-align:middle; margin-right:2px; margin-bottom:6px;"/>
                             <span class="title" style="display:inline-block; vertical-align:middle;">
-                                 琦 霖 光 輝 科 技 有 限 公 司
+                                 x x x x x x 有 限 公 司
                             </span>
                         </div>
 
@@ -324,4 +324,5 @@
             </t>
         </t>
     </template>
+
 </odoo>
